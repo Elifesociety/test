@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -80,7 +79,7 @@ export const useSupabaseData = () => {
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
 
-  // Fetch all data
+  // Fetch all data with enhanced error handling and admin access
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -91,8 +90,11 @@ export const useSupabaseData = () => {
         .select('*')
         .order('name');
       
-      if (categoriesError) throw categoriesError;
-      setCategories(categoriesData || []);
+      if (categoriesError) {
+        console.error('Categories fetch error:', categoriesError);
+      } else {
+        setCategories(categoriesData || []);
+      }
 
       // Fetch panchayaths (public)
       const { data: panchayathsData, error: panchayathsError } = await supabase
@@ -100,18 +102,29 @@ export const useSupabaseData = () => {
         .select('*')
         .order('malayalam_name');
       
-      if (panchayathsError) throw panchayathsError;
-      setPanchayaths(panchayathsData || []);
+      if (panchayathsError) {
+        console.error('Panchayaths fetch error:', panchayathsError);
+      } else {
+        setPanchayaths(panchayathsData || []);
+      }
 
-      // Fetch announcements (public - active only)
-      const { data: announcementsData, error: announcementsError } = await supabase
+      // Fetch announcements (public - active only for non-admin, all for admin)
+      const announcementsQuery = supabase
         .from('announcements')
         .select('*')
-        .eq('is_active', true)
         .order('created_at', { ascending: false });
       
-      if (announcementsError) throw announcementsError;
-      setAnnouncements(announcementsData || []);
+      if (!isAdmin) {
+        announcementsQuery.eq('is_active', true);
+      }
+      
+      const { data: announcementsData, error: announcementsError } = await announcementsQuery;
+      
+      if (announcementsError) {
+        console.error('Announcements fetch error:', announcementsError);
+      } else {
+        setAnnouncements(announcementsData || []);
+      }
 
       // Fetch photo gallery (public)
       const { data: galleryData, error: galleryError } = await supabase
@@ -119,24 +132,39 @@ export const useSupabaseData = () => {
         .select('*')
         .order('uploaded_at', { ascending: false });
       
-      if (galleryError) throw galleryError;
-      setPhotoGallery(galleryData || []);
+      if (galleryError) {
+        console.error('Gallery fetch error:', galleryError);
+      } else {
+        setPhotoGallery(galleryData || []);
+      }
 
       if (user) {
-        // Fetch registrations (user's own or all if admin)
-        const registrationsQuery = supabase
+        // Fetch registrations with enhanced admin access
+        let registrationsQuery = supabase
           .from('registrations')
           .select('*')
           .order('submitted_at', { ascending: false });
         
+        // Admin gets all data, users get only their own
         if (!isAdmin) {
-          registrationsQuery.eq('user_id', user.id);
+          registrationsQuery = registrationsQuery.eq('user_id', user.id);
         }
         
         const { data: registrationsData, error: registrationsError } = await registrationsQuery;
         
-        if (registrationsError) throw registrationsError;
-        setRegistrations(registrationsData || []);
+        if (registrationsError) {
+          console.error('Registrations fetch error:', registrationsError);
+          // Don't show error to user if it's just access denied
+          if (!registrationsError.message.includes('access')) {
+            toast({
+              title: "Error",
+              description: "Failed to load registration data. Please try again.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          setRegistrations(registrationsData || []);
+        }
 
         // Fetch notifications (admin only)
         if (isAdmin) {
@@ -145,13 +173,16 @@ export const useSupabaseData = () => {
             .select('*')
             .order('created_at', { ascending: false });
           
-          if (notificationsError) throw notificationsError;
-          // Filter and validate target_audience values
-          const validNotifications = (notificationsData || []).filter(
-            (notif): notif is PushNotification => 
-              ['all', 'category', 'panchayath', 'admin'].includes(notif.target_audience)
-          );
-          setNotifications(validNotifications);
+          if (notificationsError) {
+            console.error('Notifications fetch error:', notificationsError);
+          } else {
+            // Filter and validate target_audience values
+            const validNotifications = (notificationsData || []).filter(
+              (notif): notif is PushNotification => 
+                ['all', 'category', 'panchayath', 'admin'].includes(notif.target_audience)
+            );
+            setNotifications(validNotifications);
+          }
         }
       }
     } catch (error) {
@@ -170,7 +201,7 @@ export const useSupabaseData = () => {
     fetchData();
   }, [user, isAdmin]);
 
-  // Create registration
+  // Create registration with enhanced error handling
   const createRegistration = async (registrationData: Omit<Registration, 'id' | 'submitted_at' | 'user_id'>) => {
     if (!user) {
       toast({
@@ -191,7 +222,10 @@ export const useSupabaseData = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Registration creation error:', error);
+        throw error;
+      }
 
       toast({
         title: "Registration Submitted",
@@ -200,18 +234,18 @@ export const useSupabaseData = () => {
 
       await fetchData(); // Refresh data
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating registration:', error);
       toast({
         title: "Error",
-        description: "Failed to submit registration. Please try again.",
+        description: error.message || "Failed to submit registration. Please try again.",
         variant: "destructive",
       });
       return null;
     }
   };
 
-  // Update registration status (admin only)
+  // Update registration status (admin only) with enhanced access
   const updateRegistrationStatus = async (id: string, status: 'approved' | 'rejected', uniqueId?: string) => {
     if (!isAdmin) {
       toast({
@@ -237,7 +271,10 @@ export const useSupabaseData = () => {
         .update(updateData)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Registration update error:', error);
+        throw error;
+      }
 
       toast({
         title: "Registration Updated",
@@ -246,18 +283,18 @@ export const useSupabaseData = () => {
 
       await fetchData(); // Refresh data
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating registration:', error);
       toast({
         title: "Error",
-        description: "Failed to update registration. Please try again.",
+        description: error.message || "Failed to update registration. Please try again.",
         variant: "destructive",
       });
       return false;
     }
   };
 
-  // Delete registration (admin only)
+  // Delete registration (admin only) with enhanced access
   const deleteRegistration = async (id: string) => {
     if (!isAdmin) {
       toast({
@@ -274,7 +311,10 @@ export const useSupabaseData = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Registration deletion error:', error);
+        throw error;
+      }
 
       toast({
         title: "Registration Deleted",
@@ -283,11 +323,51 @@ export const useSupabaseData = () => {
 
       await fetchData(); // Refresh data
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting registration:', error);
       toast({
         title: "Error",
-        description: "Failed to delete registration. Please try again.",
+        description: error.message || "Failed to delete registration. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Update category image (admin only)
+  const updateCategoryImage = async (categoryName: string, imageUrl: string) => {
+    if (!isAdmin) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to perform this action.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ image_url: imageUrl })
+        .eq('name', categoryName);
+
+      if (error) {
+        console.error('Category image update error:', error);
+        throw error;
+      }
+
+      toast({
+        title: "Image Updated",
+        description: "Category image has been updated successfully.",
+      });
+
+      await fetchData(); // Refresh data
+      return true;
+    } catch (error: any) {
+      console.error('Error updating category image:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update category image. Please try again.",
         variant: "destructive",
       });
       return false;
@@ -305,6 +385,7 @@ export const useSupabaseData = () => {
     createRegistration,
     updateRegistrationStatus,
     deleteRegistration,
+    updateCategoryImage,
     refreshData: fetchData,
   };
 };

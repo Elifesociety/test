@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Target, Users, Award, TrendingUp, Heart, Eye, Bell, Calendar, Camera, CheckCircle, ShoppingCart, Briefcase, ArrowRight } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Target, Users, Award, TrendingUp, Heart, Eye, Bell, Calendar, Camera, CheckCircle, ShoppingCart, Briefcase, ArrowRight, Megaphone } from "lucide-react";
 import { useAdminData } from "@/hooks/useAdminData";
 import { useState } from "react";
 
@@ -327,45 +328,89 @@ const AboutProgram = () => {
         </div>
       </section>
 
-      {/* Latest Announcements */}
+      {/* Latest Announcements - Both Sides Display */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          <Bell className="h-6 w-6 text-blue-600" />
+          <Megaphone className="h-6 w-6 text-blue-600" />
           <h3 className="text-2xl font-bold text-gray-900">Latest Announcements</h3>
+          <Megaphone className="h-6 w-6 text-blue-600" />
         </div>
         
         {activeAnnouncements.length > 0 ? (
-          <div className="space-y-4">
-            {activeAnnouncements.slice(0, 4).map((announcement) => (
-              <Card key={announcement.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-lg">{announcement.title}</h4>
-                        {announcement.category && (
-                          <Badge variant="secondary">{announcement.category}</Badge>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Side Announcements */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-gray-800 border-l-4 border-blue-500 pl-3">
+                Program Updates
+              </h4>
+              {activeAnnouncements.slice(0, Math.ceil(activeAnnouncements.length / 2)).map((announcement) => (
+                <Card key={announcement.id} className="hover:shadow-md transition-shadow border-l-4 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-lg">{announcement.title}</h4>
+                          {announcement.category && (
+                            <Badge variant="secondary">{announcement.category}</Badge>
+                          )}
+                        </div>
+                        <p className="text-gray-600 mb-2">{announcement.content}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {announcement.link && (
+                          <div className="mt-3">
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={announcement.link} target="_blank" rel="noopener noreferrer">
+                                Learn More <ArrowRight className="h-3 w-3 ml-1" />
+                              </a>
+                            </Button>
+                          </div>
                         )}
                       </div>
-                      <p className="text-gray-600 mb-2">{announcement.content}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      {announcement.link && (
-                        <div className="mt-3">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={announcement.link} target="_blank" rel="noopener noreferrer">
-                              Learn More <ArrowRight className="h-3 w-3 ml-1" />
-                            </a>
-                          </Button>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Right Side Announcements */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-gray-800 border-l-4 border-green-500 pl-3">
+                Important Notices
+              </h4>
+              {activeAnnouncements.slice(Math.ceil(activeAnnouncements.length / 2)).map((announcement) => (
+                <Card key={announcement.id} className="hover:shadow-md transition-shadow border-l-4 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-lg">{announcement.title}</h4>
+                          {announcement.category && (
+                            <Badge variant="secondary">{announcement.category}</Badge>
+                          )}
+                        </div>
+                        <p className="text-gray-600 mb-2">{announcement.content}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Calendar className="h-4 w-4" />
+                          <span>{new Date(announcement.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {announcement.link && (
+                          <div className="mt-3">
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={announcement.link} target="_blank" rel="noopener noreferrer">
+                                Learn More <ArrowRight className="h-3 w-3 ml-1" />
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : (
           <Card className="bg-gray-50">

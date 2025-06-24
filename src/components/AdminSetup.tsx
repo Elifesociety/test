@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, UserPlus, Database, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Shield, UserPlus, Database, CheckCircle, AlertTriangle, Key } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const AdminSetup = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [setupComplete, setSetupComplete] = useState(false);
-  const { user, makeUserAdmin } = useAuth();
+  const { user, makeUserAdmin, initializeAdminUser } = useAuth();
 
   const handleMakeAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ const AdminSetup = () => {
   const handleSetupMainAdmin = async () => {
     setLoading(true);
     try {
-      await makeUserAdmin('evamarketingsolutions@gmail.com');
+      await initializeAdminUser();
       setSetupComplete(true);
     } catch (error) {
       console.error('Error setting up main admin:', error);
@@ -69,24 +69,34 @@ const AdminSetup = () => {
               Admin Setup Complete
             </CardTitle>
             <CardDescription className="text-green-700">
-              The admin system has been successfully configured.
+              The admin system has been successfully configured with universal access.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700">
-                Admin user <strong>evamarketingsolutions@gmail.com</strong> has been set up with full system access.
+                Admin user <strong>evamarketingsolutions@gmail.com</strong> has been set up with full system access including:
+                <ul className="mt-2 ml-4 list-disc text-sm">
+                  <li>Universal registration data access</li>
+                  <li>Supabase storage management</li>
+                  <li>Category photo upload/update capabilities</li>
+                  <li>Cross-origin admin panel access</li>
+                </ul>
               </AlertDescription>
             </Alert>
 
             <div className="p-4 bg-white rounded-lg border border-green-200">
-              <h4 className="font-semibold text-green-800 mb-2">Admin Access Details:</h4>
+              <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                <Key className="h-4 w-4" />
+                Admin Access Details:
+              </h4>
               <ul className="text-sm text-green-700 space-y-1">
                 <li>• <strong>Email:</strong> evamarketingsolutions@gmail.com</li>
                 <li>• <strong>Password:</strong> admin919123</li>
-                <li>• <strong>Access Level:</strong> Full Admin (Universal Access)</li>
-                <li>• <strong>Permissions:</strong> All registration data, system management</li>
+                <li>• <strong>Access Level:</strong> Universal Admin (All Data)</li>
+                <li>• <strong>Storage:</strong> Full upload/download permissions</li>
+                <li>• <strong>Scope:</strong> Cross-origin access enabled</li>
               </ul>
             </div>
 
@@ -100,6 +110,7 @@ const AdminSetup = () => {
                 <li>• Enable two-factor authentication if available</li>
                 <li>• Regularly monitor admin access logs</li>
                 <li>• Keep admin credentials secure and confidential</li>
+                <li>• Test all admin functions including photo uploads</li>
               </ul>
             </div>
 
@@ -121,30 +132,37 @@ const AdminSetup = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-orange-800">
             <Shield className="h-5 w-5" />
-            Admin Access Setup
+            SEDP Admin System Setup
           </CardTitle>
           <CardDescription className="text-orange-700">
-            Set up admin access for the SEDP system. This is required for first-time setup.
+            Initialize the admin system with universal access capabilities for the SEDP platform.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <Database className="h-4 w-4" />
             <AlertDescription>
-              No admin users found in the system. You need to assign admin role to access the admin panel.
+              No admin users found in the system. Initialize the admin system to enable:
+              <ul className="mt-2 ml-4 list-disc text-sm">
+                <li>Universal registration data access</li>
+                <li>Supabase storage management</li>
+                <li>Category photo upload/update</li>
+                <li>Cross-origin admin functionality</li>
+              </ul>
             </AlertDescription>
           </Alert>
 
           {/* Main Admin Setup */}
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2">Primary Admin Setup</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">🚀 Primary Admin Initialization</h4>
               <p className="text-sm text-blue-700 mb-3">
-                Set up the main admin account for universal system access:
+                Set up the main admin account with universal system access and storage permissions:
               </p>
               <div className="text-sm text-blue-600 mb-3 font-mono bg-white p-2 rounded border">
                 <strong>Email:</strong> evamarketingsolutions@gmail.com<br/>
-                <strong>Password:</strong> admin919123
+                <strong>Password:</strong> admin919123<br/>
+                <strong>Access:</strong> Universal (All Data + Storage)
               </div>
               <Button 
                 onClick={handleSetupMainAdmin}
@@ -152,7 +170,7 @@ const AdminSetup = () => {
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                {loading ? 'Setting up...' : 'Setup Main Admin'}
+                {loading ? 'Initializing System...' : 'Initialize Admin System'}
               </Button>
             </div>
 
@@ -163,7 +181,7 @@ const AdminSetup = () => {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-orange-50 px-2 text-muted-foreground">Or</span>
+                    <span className="bg-orange-50 px-2 text-muted-foreground">Alternative Options</span>
                   </div>
                 </div>
 
@@ -204,13 +222,15 @@ const AdminSetup = () => {
           </div>
 
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-semibold text-gray-800 mb-2">What happens next?</h4>
+            <h4 className="font-semibold text-gray-800 mb-2">System Capabilities After Setup:</h4>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>• The admin user will be granted full system privileges</li>
-              <li>• They can access all registration data from anywhere</li>
-              <li>• Admin users can approve/reject applications</li>
-              <li>• They can manage categories, announcements, and system settings</li>
-              <li>• Universal access to all system features and data</li>
+              <li>✅ Universal access to all registration data from any location</li>
+              <li>✅ Full Supabase storage management and file upload capabilities</li>
+              <li>✅ Category photo upload, update, and management</li>
+              <li>✅ Cross-origin admin panel access with proper CORS configuration</li>
+              <li>✅ Panchayath data management and form integration</li>
+              <li>✅ Announcement system with dual-side display</li>
+              <li>✅ Enhanced security with Row Level Security (RLS) policies</li>
             </ul>
           </div>
         </CardContent>

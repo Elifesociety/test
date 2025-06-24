@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   makeUserAdmin: (email: string) => Promise<void>;
+  initializeAdminUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,12 +73,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
-      // Check admin role in database
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin');
+      // Check admin role in database using the enhanced function
+      const { data, error } = await supabase.rpc('has_admin_access', { user_id: userId });
 
       if (error) {
         console.error('Error checking admin role:', error);
@@ -85,10 +82,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
-      setIsAdmin(data && data.length > 0);
+      setIsAdmin(data || false);
     } catch (error) {
       console.error('Error checking admin role:', error);
       setIsAdmin(false);
+    }
+  };
+
+  const initializeAdminUser = async () => {
+    try {
+      // Call the database function to create admin user
+      const { error } = await supabase.rpc('create_admin_user');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Admin User Initialized",
+        description: "Admin user has been created successfully with credentials: evamarketingsolutions@gmail.com / admin919123",
+      });
+
+      return;
+    } catch (error: any) {
+      console.error('Error initializing admin user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to initialize admin user",
+        variant: "destructive",
+      });
     }
   };
 
@@ -96,18 +118,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       // Special handling for main admin
       if (email === 'evamarketingsolutions@gmail.com') {
-        // Call the database function to ensure admin user exists
-        const { error } = await supabase.rpc('create_admin_user');
+        await initializeAdminUser();
         
-        if (error) {
-          throw error;
-        }
-
-        toast({
-          title: "Main Admin Setup Complete",
-          description: `Admin user ${email} has been configured with universal access.`,
-        });
-
         // Refresh admin status if it's the current user
         if (user?.email === email) {
           setIsAdmin(true);
@@ -186,7 +198,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     toast({
       title: "Account Created",
-      description: "Please check your email to verify your account.",
+      description: "Your account has been created successfully. You can now sign in.",
     });
   };
 
@@ -236,6 +248,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signOut,
     resetPassword,
     makeUserAdmin,
+    initializeAdminUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
